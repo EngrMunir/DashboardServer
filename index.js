@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 const port = process.env.PORT || 5000;
 
 app.use(cors())
@@ -26,9 +27,14 @@ async function run() {
     const userCollection = await client.db('MFS_DB').createCollection('users');
 
     // user related api
-    app.post('/users',(req, res)=>{
+    app.post('/users',async(req, res)=>{
         const user = req.body.data;
         console.log(user)
+        const hashPin =await bcrypt.hash(user?.pin, 10);
+        user.pin = hashPin;
+        const result = await userCollection.insertOne(user)
+        console.log(result)
+        res.send(result)
     })
 
     // Send a ping to confirm a successful connection
@@ -36,7 +42,7 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
